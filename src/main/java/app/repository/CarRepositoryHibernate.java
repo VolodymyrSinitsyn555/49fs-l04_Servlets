@@ -4,6 +4,7 @@ import app.model.Car;
 import jakarta.persistence.EntityManager;
 import org.hibernate.cfg.Configuration;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -29,10 +30,27 @@ public class CarRepositoryHibernate implements CarRepository {
 
     @Override
     public Car save(Car car) {
+
+        if (car == null) {
+            throw new IllegalArgumentException("Car cannot be null");
+        }
+
+        if (car.getBrand() == null || car.getBrand().isEmpty()) {
+            throw new IllegalArgumentException("Brand cannot be empty or null");
+        }
+        if (car.getPrice() == null) {
+            throw new IllegalArgumentException("Price cannot be null");
+        }
+
+        if (car.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Price must be greater than zero");
+        }
+
         entityManager.getTransaction().begin();
         entityManager.persist(car);
         entityManager.getTransaction().commit();
         return car;
+
     }
 
     private boolean isFieldsEmptyForUpdate(Car car) {
@@ -51,18 +69,18 @@ public class CarRepositoryHibernate implements CarRepository {
     @Override
     public Car update(Car car) {
 
-//        if (car.getId() == null) {
-//            throw new IllegalArgumentException("ID must be specified for update");
-//        }
+        if (car.getId() == null) {
+            throw new IllegalArgumentException("ID must be specified for update");
+        }
 
         Car existingCar = entityManager.find(Car.class, car.getId());
-//        if (existingCar == null) {
-//            throw new IllegalArgumentException("Car with id " + car.getId() + " not found");
-//        }
-//
-//        if (isFieldsEmptyForUpdate(car)) {
-//            throw new IllegalArgumentException("No fields with new values were provided for update. Please specify at least one field to update.");
-//        }
+        if (existingCar == null) {
+            throw new IllegalArgumentException("Car with id " + car.getId() + " not found");
+        }
+
+        if (isFieldsEmptyForUpdate(car)) {
+            throw new IllegalArgumentException("No fields with new values were provided for update. Please specify at least one field to update.");
+        }
 
         entityManager.getTransaction().begin();
         updateFields(existingCar, car);

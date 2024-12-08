@@ -82,16 +82,24 @@ public class CarServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("application/json");
 
-        Car car = mapper.readValue(req.getReader(), Car.class);
-
-//        System.out.println("car from Post" + car);
-
-        car = repository.save(car);
-
-        String json = mapper.writeValueAsString(car);
-
-        resp.getWriter().write(json);
+        try {
+            Car car = mapper.readValue(req.getReader(), Car.class);
+            car = repository.save(car);
+            String json = mapper.writeValueAsString(car);
+            resp.setStatus(HttpServletResponse.SC_CREATED);
+            resp.getWriter().write(json);
+        } catch (IllegalArgumentException e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write(e.getMessage());
+        } catch (RuntimeException e) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write(e.getMessage());
+        } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write(e.getMessage());
+        }
     }
 
     @Override
@@ -106,14 +114,14 @@ public class CarServlet extends HttpServlet {
         }
 
         try {
-        Long id = Long.parseLong(idStr);
-        if (id <= 0){
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("ID must be positive");
+            Long id = Long.parseLong(idStr);
+            if (id <= 0) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("ID must be positive");
             } else {
-        repository.delete(id);
-        resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
-        }
+                repository.delete(id);
+                resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+            }
 
         } catch (NumberFormatException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
